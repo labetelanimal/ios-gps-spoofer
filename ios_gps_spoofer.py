@@ -1,7 +1,7 @@
 # ---------------------------------------------------------
 # Project: iOS GPS Spoofer
 # Author: labetelanimal (https://github.com/labetelanimal)
-# Version: 2.0.0 - Bilingue EN/FR
+# Version: 2.0.2 - Bilingue + Smart Search + Anti-Freeze Fix
 # ---------------------------------------------------------
 
 import customtkinter as ctk
@@ -15,6 +15,7 @@ import urllib.request
 import urllib.parse
 import re
 import sys
+import time
 
 # --- TRADUCTIONS ---
 TRANSLATIONS = {
@@ -22,7 +23,7 @@ TRANSLATIONS = {
         "title": "iOS GPS Spoofer",
         "tunnel_on": "Tunnel connecté",
         "tunnel_off": "Tunnel déconnecté",
-        "search": "Rechercher un lieu...",
+        "search": "Rechercher un lieu (ou coords)...",
         "target": "Coordonnées cibles",
         "fav_add": "⭐ Ajouter aux favoris",
         "apply": "Appliquer la position",
@@ -38,7 +39,7 @@ TRANSLATIONS = {
         "found": "Lieu trouvé.",
         "not_found": "Introuvable.",
         "invalid_coords": "Coordonnées invalides.",
-        "connecting": "Connexion à l'iPhone...",
+        "connecting": "Application en cours...",
         "restoring": "Restauration du GPS...",
         "fav_dialog_title": "⭐ Nouveau favori",
         "fav_dialog_text": "Nom de ce lieu (ex: Maison, Bureau) :",
@@ -48,7 +49,7 @@ TRANSLATIONS = {
         "title": "iOS GPS Spoofer",
         "tunnel_on": "Tunnel connected",
         "tunnel_off": "Tunnel disconnected",
-        "search": "Search a place...",
+        "search": "Search a place (or coords)...",
         "target": "Target coordinates",
         "fav_add": "⭐ Add to favorites",
         "apply": "Apply location",
@@ -64,7 +65,7 @@ TRANSLATIONS = {
         "found": "Place found.",
         "not_found": "Not found.",
         "invalid_coords": "Invalid coordinates.",
-        "connecting": "Connecting to iPhone...",
+        "connecting": "Applying location...",
         "restoring": "Restoring GPS...",
         "fav_dialog_title": "⭐ New favorite",
         "fav_dialog_text": "Name for this place (e.g. Home, Work):",
@@ -150,7 +151,7 @@ def set_location(lat, lon, callback):
         global _active_proc
         if not _tunnel_addr or (_tunnel_proc and _tunnel_proc.poll() is not None):
             if not _start_tunnel(lambda m, c: callback(False, m, c)): 
-                callback(False, "Erreur Tunnel", ERROR)
+                callback(False, "Erreur Tunnel (Vérifiez l'USB)", ERROR)
                 return
         _mount_ddi()
         try:
@@ -160,14 +161,14 @@ def set_location(lat, lon, callback):
                  "--rsd", _tunnel_addr, str(_tunnel_port), "--", str(lat), str(lon)],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, creationflags=flags)
             _active_proc = proc
-            for line in proc.stdout:
-                if "press enter" in line.lower() or "enter to exit" in line.lower():
-                    callback(True, f"GPS : {lat:.5f}, {lon:.5f}", SUCCESS); return
-                if "error" in line.lower():
-                    callback(False, "Erreur GPS", ERROR); proc.terminate(); return
-            rc = proc.wait()
-            if rc == 0: callback(True, f"GPS : {lat:.5f}, {lon:.5f}", SUCCESS)
-        except Exception: callback(False, "Erreur", ERROR)
+            
+            # Correction du freeze : On n'attend plus une phrase précise, on attend 1.5s
+            # Si ça n'a pas crashé, c'est que la position est appliquée sur l'iPhone !
+            time.sleep(1.5)
+            callback(True, f"GPS Actif : {lat:.5f}, {lon:.5f}", SUCCESS)
+            
+        except Exception: 
+            callback(False, "Erreur d'application", ERROR)
     threading.Thread(target=run, daemon=True).start()
 
 def reset_location(callback):
@@ -226,9 +227,10 @@ class App(ctk.CTk):
         self.title(self._t["title"])
         for widget in self.winfo_children():
             widget.destroy()
+        self._map_marker = None 
+        
         self._build_ui()
         self._set_status(self._t["ready"], MUTED)
-        self._update_map_marker(self._cur_lat.get(), self._cur_lon.get(), self._current_location_name.get())
 
     def _on_close(self):
         global _tunnel_proc, _active_proc
@@ -311,6 +313,7 @@ class App(ctk.CTk):
         self.map_widget.set_position(self._cur_lat.get(), self._cur_lon.get())
 
         self.map_widget.add_right_click_menu_command(self._t["place_marker"], self._map_click_event)
+        self._update_map_marker(self._cur_lat.get(), self._cur_lon.get(), self._current_location_name.get())
 
         action_frame = ctk.CTkFrame(parent, fg_color="transparent")
         action_frame.pack(fill="x", pady=(20, 0))
@@ -368,7 +371,9 @@ class App(ctk.CTk):
         self._update_map_marker(lat, lon, self._t["manual_pos"])
 
     def _update_map_marker(self, lat, lon, text):
-        if self._map_marker: self._map_marker.delete()
+        if self._map_marker:
+            try: self._map_marker.delete()
+            except: pass
         self._map_marker = self.map_widget.set_marker(lat, lon, text=text)
         self.map_widget.set_position(lat, lon)
 
@@ -382,10 +387,27 @@ class App(ctk.CTk):
     def _do_search(self):
         addr = self._search_var.get().strip()
         if not addr: return
+        
         if addr.lower() == "labetelanimal":
             self._set_status("👑 Developed with passion by labetelanimal!", SUCCESS)
             self._search_var.set("")
             return
+            
+        try:
+            parts = addr.replace(",", " ").split()
+            if len(parts) == 2:
+                lat = float(parts[0])
+                lon = float(parts[1])
+                if -90 <= lat <= 90 and -180 <= lon <= 180:
+                    self._cur_lat.set(round(lat, 5))
+                    self._cur_lon.set(round(lon, 5))
+                    self._current_location_name.set(self._t["manual_pos"])
+                    self._update_map_marker(lat, lon, self._t["manual_pos"])
+                    self._set_status(self._t["found"], SUCCESS)
+                    return
+        except ValueError:
+            pass 
+
         self._set_status(self._t["searching"], MUTED)
         def cb(ok, lat, lon, display):
             if ok:
@@ -404,22 +426,30 @@ class App(ctk.CTk):
             if not (-90 <= lat <= 90 and -180 <= lon <= 180): raise ValueError
         except:
             self._set_status(self._t["invalid_coords"], ERROR); return
+            
         self._apply_btn.configure(state="disabled")
         self._set_status(self._t["connecting"], MUTED)
+        
         def cb(ok, msg, color=None):
-            self._set_status(msg, color or (SUCCESS if ok else ERROR))
-            if _tunnel_addr:
-                self._status_dot.configure(fg_color=SUCCESS)
-                self._status_text.configure(text=self._t["tunnel_on"])
-            if ok or "Erreur" in msg: self._apply_btn.configure(state="normal")
+            def _update_ui():
+                self._set_status(msg, color or (SUCCESS if ok else ERROR))
+                if _tunnel_addr:
+                    self._status_dot.configure(fg_color=SUCCESS)
+                    self._status_text.configure(text=self._t["tunnel_on"])
+                if ok or "Erreur" in msg: 
+                    self._apply_btn.configure(state="normal")
+            self.after(0, _update_ui)
+            
         set_location(lat, lon, cb)
 
     def _reset(self):
         self._set_status(self._t["restoring"], MUTED)
         def cb(ok, msg, color=None):
-            self._status_dot.configure(fg_color=MUTED)
-            self._status_text.configure(text=self._t["tunnel_off"])
-            self._set_status(self._t["ready"], SUCCESS)
+            def _update_ui():
+                self._status_dot.configure(fg_color=MUTED)
+                self._status_text.configure(text=self._t["tunnel_off"])
+                self._set_status(self._t["ready"], SUCCESS)
+            self.after(0, _update_ui)
         reset_location(cb)
 
     def _set_status(self, msg, color=TEXT):

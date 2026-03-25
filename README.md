@@ -1,28 +1,28 @@
 # 🌍 iOS GPS Spoofer
 
-A modern and elegant desktop application that allows you to modify (spoof) your iPhone's GPS location via USB, **without any jailbreak**. 
+Une application desktop moderne et élégante permettant de modifier (spoof) la position GPS d'un iPhone via USB, **sans aucun jailbreak**. 
 
-Built with Python, it relies on `pymobiledevice3` to communicate with the iOS device and features a minimalist UI (Dark Mode) alongside an interactive Google Satellite map.
+Développée en Python, elle utilise `pymobiledevice3` pour communiquer avec l'appareil iOS et propose une interface minimaliste (Dark Mode) avec une carte interactive Google Satellite.
 
-## ✨ Features
+## ✨ Fonctionnalités
 
-* **Premium Interface (Dark Mode):** Clean, sleek, and modern design powered by `CustomTkinter`.
-* **Real-time Interactive Map:** Smooth navigation with a hybrid view (Google Satellite + Street names) using `TkinterMapView`.
-* **Click-to-Spoof:** Right-click anywhere on the map to instantly set your new location.
-* **Smart Search:** Type the name of a city or address to instantly teleport there.
-* **Favorites System:** Save your preferred spots with a custom name so you can return to them in a single click.
-* **Quick Reset:** A dedicated button to kill the tunnel and restore the iPhone's real GPS location.
+* **Interface Premium (Dark Mode) :** Design épuré et moderne propulsé par `CustomTkinter`.
+* **Carte Interactive en temps réel :** Navigation fluide avec vue hybride (Google Satellite + Noms des rues) via `TkinterMapView`.
+* **Sélection au Clic :** Fais un clic-droit n'importe où sur la carte pour définir ta nouvelle position instantanément.
+* **Recherche Intelligente :** Tape le nom d'une ville ou d'une adresse pour t'y téléporter.
+* **Système de Favoris :** Enregistre tes emplacements préférés avec un nom personnalisé pour y retourner en un clic.
+* **Reset Rapide :** Un bouton dédié pour couper le tunnel et rendre à l'iPhone sa position GPS réelle.
 
-## 🛠️ Prerequisites
+## 🛠️ Prérequis
 
-Before running the project, make sure you have the following:
-1. **Python 3.x** installed and added to your system's PATH.
-2. **iTunes** (or the "Apple Devices" app on Windows 11) installed to ensure you have the official Apple USB drivers.
-3. A USB cable to connect your iPhone to your PC (you must tap "Trust This Computer" on your iPhone).
+Avant de lancer le projet, assure-toi d'avoir :
+1. **Python 3.x** installé et ajouté au PATH.
+2. **iTunes** (ou l'application "Appareils Apple" sur Windows 11) installé pour avoir les pilotes Apple officiels.
+3. Un câble USB pour relier l'iPhone au PC (l'iPhone doit avoir "Fait confiance" à l'ordinateur).
 
 ## 🚀 Installation
 
-1. Clone this repository to your local machine:
+1. Clone ce repository sur ta machine :
    ```bash
-   git clone [https://github.com/YOUR-USERNAME/ios-gps-spoofer.git](https://github.com/YOUR-USERNAME/ios-gps-spoofer.git)
+   git clone [https://github.com/TON-NOM-UTILISATEUR/ios-gps-spoofer.git](https://github.com/TON-NOM-UTILISATEUR/ios-gps-spoofer.git)
    cd ios-gps-spoofer

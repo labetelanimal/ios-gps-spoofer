@@ -1,3 +1,10 @@
+# ---------------------------------------------------------
+# Project: iOS GPS Spoofer
+# Author: labetelanimal (https://github.com/labetelanimal)
+# Version: 1.0.0
+# ---------------------------------------------------------
+
+
 import customtkinter as ctk
 import tkinter as tk
 import tkintermapview
@@ -187,10 +194,47 @@ class App(ctk.CTk):
         self._build_main_area(main_area)
 
         self._update_map_marker(self._cur_lat.get(), self._cur_lon.get(), "Paris, France")
-
-    def _build_sidebar(self, parent):
+def _build_sidebar(self, parent):
+        # --- PARTIE RECHERCHE ---
         search_frame = ctk.CTkFrame(parent, fg_color="transparent")
         search_frame.pack(fill="x", padx=20, pady=(25, 15))
+        
+        self._search_var = tk.StringVar()
+        search_entry = ctk.CTkEntry(search_frame, textvariable=self._search_var, fg_color=BG, text_color=TEXT, border_color=BORDER, border_width=1, corner_radius=8, height=40, placeholder_text="Rechercher un lieu...", font=ctk.CTkFont(size=13))
+        search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        search_entry.bind("<Return>", lambda _: self._do_search())
+        
+        btn_search = ctk.CTkButton(search_frame, text="→", command=self._do_search, width=40, height=40, fg_color=BG, hover_color=BG_HOVER, border_color=BORDER, border_width=1, text_color=TEXT, corner_radius=8, font=ctk.CTkFont(size=16, weight="bold"))
+        btn_search.pack(side="right")
+
+        ctk.CTkFrame(parent, fg_color=BORDER, height=1).pack(fill="x", padx=20, pady=10)
+
+        # --- LISTE DES LIEUX ---
+        self.scroll_list = ctk.CTkScrollableFrame(parent, fg_color="transparent", bg_color="transparent")
+        self.scroll_list.pack(fill="both", expand=True, padx=10, pady=5)
+        self._refresh_locations_list()
+
+        # --- INFOS COORDONNÉES & FAVORIS ---
+        info_frame = ctk.CTkFrame(parent, fg_color=BG, corner_radius=12)
+        info_frame.pack(fill="x", padx=20, pady=20)
+        ctk.CTkLabel(info_frame, text="Coordonnées cibles", text_color=MUTED, font=ctk.CTkFont(size=11)).pack(anchor="w", padx=15, pady=(15, 0))
+        
+        coord_text = ctk.CTkLabel(info_frame, text="", text_color=TEXT, font=ctk.CTkFont(size=12, weight="bold"))
+        coord_text.pack(anchor="w", padx=15, pady=(2, 10))
+        
+        fav_btn = ctk.CTkButton(info_frame, text="⭐ Ajouter aux favoris", command=self._add_favorite, fg_color=BG2, hover_color=BG_HOVER, text_color=SUCCESS, border_color=BORDER, border_width=1, height=32, font=ctk.CTkFont(size=12, weight="bold"))
+        fav_btn.pack(fill="x", padx=15, pady=(0, 15))
+
+        def update_coords(*args):
+            try: coord_text.configure(text=f"{self._cur_lat.get():.4f}, {self._cur_lon.get():.4f}")
+            except: pass
+        self._cur_lat.trace_add("write", update_coords)
+        self._cur_lon.trace_add("write", update_coords)
+        update_coords()
+        signature = ctk.CTkLabel(parent, text="Made by labetelanimal", 
+                                 text_color="#1f1f24", 
+                                 font=ctk.CTkFont(family="Inter", size=10, weight="bold"))
+        signature.pack(side="bottom", pady=15)
         
         self._search_var = tk.StringVar()
         search_entry = ctk.CTkEntry(search_frame, textvariable=self._search_var, fg_color=BG, text_color=TEXT, border_color=BORDER, border_width=1, corner_radius=8, height=40, placeholder_text="Rechercher un lieu...", font=ctk.CTkFont(size=13))
@@ -317,6 +361,12 @@ class App(ctk.CTk):
     def _do_search(self):
         addr = self._search_var.get().strip()
         if not addr: return
+        
+        if addr.lower() == "labetelanimal":
+            self._set_status("👑 Developed with passion by labetelanimal!", SUCCESS)
+            self._search_var.set("") # On vide la barre pour l'effet "magique"
+            return
+
         self._set_status("Recherche...", MUTED)
         def cb(ok, lat, lon, display):
             if ok:

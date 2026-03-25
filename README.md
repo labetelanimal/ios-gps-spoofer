@@ -24,5 +24,5 @@ Avant de lancer le projet, assure-toi d'avoir :
 
 1. Clone ce repository sur ta machine :
    ```bash
-   git clone [https://github.com/TON-NOM-UTILISATEUR/ios-gps-spoofer.git](https://github.com/TON-NOM-UTILISATEUR/ios-gps-spoofer.git)
+   git clone [https://github.com/labetelanimal/ios-gps-spoofer.git](https://github.com/labetelanimal/ios-gps-spoofer.git)
    cd ios-gps-spoofer
